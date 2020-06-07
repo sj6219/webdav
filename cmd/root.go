@@ -26,7 +26,7 @@ func init() {
 	flags.String("cert", "cert.pem", "TLS certificate")
 	flags.String("key", "key.pem", "TLS key")
 	flags.StringP("address", "a", "0.0.0.0", "address to listen to")
-	flags.StringP("port", "p", "0", "port to listen to")
+	flags.StringP("port", "p", "5700", "port to listen to")
 	flags.StringP("prefix", "P", "/", "URL path prefix")
 
 	flags.BoolP("tvnviewer-dll", "V", false, "")
@@ -67,12 +67,15 @@ set WD_CERT.`,
 		// Tell the user the port in which is listening.
 		fmt.Println("Listening on", listener.Addr().String())
 		if getOptB(flags, "tvnviewer-dll") {
-			dll, _ := syscall.LoadLibrary("tvnviewer-dll.dll")
-			main, _ := syscall.GetProcAddress(dll, "Main")
-			var nargs uintptr = 1
-			port := listener.Addr().(*net.TCPAddr).Port
-			syscall.Syscall(uintptr(main), nargs, uintptr(port), 0, 0)
-			//defer syscall.FreeLibrary(dll)
+			go func() {
+				dll, _ := syscall.LoadLibrary("tvnviewer-dll.dll")
+				main, _ := syscall.GetProcAddress(dll, "Main")
+				var nargs uintptr = 1
+				port := listener.Addr().(*net.TCPAddr).Port
+				ret, _, _ := syscall.Syscall(uintptr(main), nargs, uintptr(port), 0, 0)
+				//defer syscall.FreeLibrary(dll)
+				syscall.ExitProcess(uint32(ret))
+			}()
 		}
 
 		// Starts the server.
