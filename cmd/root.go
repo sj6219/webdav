@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"syscall"
 
@@ -29,8 +30,8 @@ func init() {
 	flags.StringP("port", "p", "5700", "port to listen to")
 	flags.StringP("prefix", "P", "/", "URL path prefix")
 
-	flags.BoolP("tvnviewer-dll", "V", false, "")
-	flags.BoolP("tvnserver-dll", "S", false, "")
+	flags.BoolP("viewer-dll", "V", false, "")
+	flags.BoolP("server-dll", "S", false, "")
 }
 
 var rootCmd = &cobra.Command{
@@ -66,9 +67,10 @@ set WD_CERT.`,
 
 		// Tell the user the port in which is listening.
 		fmt.Println("Listening on", listener.Addr().String())
-		if getOptB(flags, "tvnviewer-dll") {
+		program := os.Args[0]
+		if getOptB(flags, "viewer-dll") || strings.HasSuffix(program, "viewer.exe") {
 			go func() {
-				dll, _ := syscall.LoadLibrary("tvnviewer-dll.dll")
+				dll, _ := syscall.LoadLibrary("viewer-dll.dll")
 				main, _ := syscall.GetProcAddress(dll, "Main")
 				var nargs uintptr = 1
 				port := listener.Addr().(*net.TCPAddr).Port
