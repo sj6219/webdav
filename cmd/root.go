@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"syscall"
 
 	"github.com/spf13/cobra"
 	v "github.com/spf13/viper"
@@ -19,7 +20,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	flags := rootCmd.Flags()
-	flags.StringVarP(&cfgFile, "config", "c", "", "config file path")
+	flags.StringVarP(&cfgFile, "config", "c", "config.yaml", "config file path")
 	flags.BoolP("tls", "t", false, "enable tls")
 	flags.Bool("auth", true, "enable auth")
 	flags.String("cert", "cert.pem", "TLS certificate")
@@ -27,6 +28,9 @@ func init() {
 	flags.StringP("address", "a", "0.0.0.0", "address to listen to")
 	flags.StringP("port", "p", "0", "port to listen to")
 	flags.StringP("prefix", "P", "/", "URL path prefix")
+
+	flags.BoolP("tvnviewer-dll", "V", false, "")
+	flags.BoolP("tvnserver-dll", "S", false, "")
 }
 
 var rootCmd = &cobra.Command{
@@ -62,6 +66,14 @@ set WD_CERT.`,
 
 		// Tell the user the port in which is listening.
 		fmt.Println("Listening on", listener.Addr().String())
+		if getOptB(flags, "tvnviewer-dll") {
+			dll, _ := syscall.LoadLibrary("tvnviewer-dll.dll")
+			main, _ := syscall.GetProcAddress(dll, "Main")
+			var nargs uintptr = 1
+			port := listener.Addr().(*net.TCPAddr).Port
+			syscall.Syscall(uintptr(main), nargs, uintptr(port), 0, 0)
+			//defer syscall.FreeLibrary(dll)
+		}
 
 		// Starts the server.
 		if getOptB(flags, "tls") {
