@@ -27,7 +27,7 @@ func init() {
 	flags.String("cert", "cert.pem", "TLS certificate")
 	flags.String("key", "key.pem", "TLS key")
 	flags.StringP("address", "a", "0.0.0.0", "address to listen to")
-	flags.StringP("port", "p", "5700", "port to listen to")
+	flags.StringP("port", "p", "0", "port to listen to")
 	flags.StringP("prefix", "P", "/", "URL path prefix")
 
 	flags.BoolP("viewer-dll", "V", false, "")
