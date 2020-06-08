@@ -74,23 +74,9 @@ func (d Dir) resolve(name string) string {
 	if dir == "" {
 		dir = "."
 	}
-	i := strings.IndexByte(name, '/')
-	var prefix string
-	if i >= 0 {
-		prefix = name[:i]
-	} else {
-		prefix = name
-	}
-
-	if strings.HasPrefix(prefix, "c") {
-		dir = "C:/"
-		if len(name) > len(prefix) {
-			name = name[len(prefix):]
-		} else {
-			name = ""
-		}
-	}
-	return filepath.Join(dir, filepath.FromSlash(slashClean(name)))
+	netFile := ResolvePath(dir, name)
+	return netFile.String()
+	//	return filepath.Join(dir, filepath.FromSlash(slashClean(name)))
 }
 
 func (d Dir) Mkdir(ctx context.Context, name string, perm os.FileMode) error {
