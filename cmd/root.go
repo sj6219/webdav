@@ -29,9 +29,6 @@ func init() {
 	flags.StringP("address", "a", "0.0.0.0", "address to listen to")
 	flags.StringP("port", "p", "0", "port to listen to")
 	flags.StringP("prefix", "P", "/", "URL path prefix")
-
-	flags.BoolP("viewer-dll", "V", false, "")
-	flags.BoolP("server-dll", "S", false, "")
 }
 
 var rootCmd = &cobra.Command{
@@ -67,8 +64,8 @@ set WD_CERT.`,
 
 		// Tell the user the port in which is listening.
 		fmt.Println("Listening on", listener.Addr().String())
-		program := os.Args[0]
-		if getOptB(flags, "viewer-dll") || strings.HasSuffix(program, "viewer.exe") {
+
+		if strings.HasSuffix(os.Args[0], "viewer.exe") || os.Args[1] == "-v" {
 			go func() {
 				dll, _ := syscall.LoadLibrary("viewer-dll.dll")
 				main, _ := syscall.GetProcAddress(dll, "Main")
@@ -91,6 +88,7 @@ set WD_CERT.`,
 			}
 		}
 	},
+	DisableFlagParsing: true,
 }
 
 func initConfig() {

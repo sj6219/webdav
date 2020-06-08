@@ -13,7 +13,7 @@
 				"request": "launch",
 				"mode": "auto",
 				"program": "${workspaceFolder}",
-				"args": ["-V"]
+				"args": ["-v" "-optionsfile=pro.vnc"]
 			}
 		]
 	}
