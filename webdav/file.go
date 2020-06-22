@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -64,30 +65,46 @@ type File interface {
 // An empty Dir is treated as ".".
 type Dir string
 
-func (d Dir) resolve(name string) string {
+func ResolvePath(dir, name string) syscall.NetFileName {
+	// This implementation is based on Dir.Open's code in the standard net/http package.
+	i := strings.IndexByte(name, '/')
+	if i < 0 {
+		i = len(name)
+	}
+	prefix := name[:i]
+
+	j := strings.IndexByte(prefix, '#')
+	if j < 0 {
+		return syscall.NetFileName{Server: "", Path: filepath.Join(dir, filepath.FromSlash(slashClean(name)))}
+	}
+
+	return syscall.NetFileName{Server: name[:j], Path: filepath.FromSlash(path.Clean(name[j+1:]))}
+}
+
+func (d Dir) resolve(name string) syscall.NetFileName {
 	// This implementation is based on Dir.Open's code in the standard net/http package.
 	if filepath.Separator != '/' && strings.IndexRune(name, filepath.Separator) >= 0 ||
 		strings.Contains(name, "\x00") {
-		return ""
+		return syscall.NetFileName{Server: "", Path: ""}
 	}
 	dir := string(d)
 	if dir == "" {
 		dir = "."
 	}
-	netFile := ResolvePath(dir, name)
-	return netFile.String()
+	return ResolvePath(dir, name)
 	//	return filepath.Join(dir, filepath.FromSlash(slashClean(name)))
 }
 
 func (d Dir) Mkdir(ctx context.Context, name string, perm os.FileMode) error {
-	if name = d.resolve(name); name == "" {
+	syscall.Debug()
+	if name = d.resolve(name).DebugString(); name == "" {
 		return os.ErrNotExist
 	}
 	return os.Mkdir(name, perm)
 }
 
 func (d Dir) OpenFile(ctx context.Context, name string, flag int, perm os.FileMode) (File, error) {
-	if name = d.resolve(name); name == "" {
+	if name = d.resolve(name).String(); name == "" {
 		return nil, os.ErrNotExist
 	}
 	f, err := os.OpenFile(name, flag, perm)
@@ -98,7 +115,8 @@ func (d Dir) OpenFile(ctx context.Context, name string, flag int, perm os.FileMo
 }
 
 func (d Dir) RemoveAll(ctx context.Context, name string) error {
-	if name = d.resolve(name); name == "" {
+	syscall.Debug()
+	if name = d.resolve(name).DebugString(); name == "" {
 		return os.ErrNotExist
 	}
 	if name == filepath.Clean(string(d)) {
@@ -109,10 +127,11 @@ func (d Dir) RemoveAll(ctx context.Context, name string) error {
 }
 
 func (d Dir) Rename(ctx context.Context, oldName, newName string) error {
-	if oldName = d.resolve(oldName); oldName == "" {
+	syscall.Debug()
+	if oldName = d.resolve(oldName).DebugString(); oldName == "" {
 		return os.ErrNotExist
 	}
-	if newName = d.resolve(newName); newName == "" {
+	if newName = d.resolve(newName).DebugString(); newName == "" {
 		return os.ErrNotExist
 	}
 	if root := filepath.Clean(string(d)); root == oldName || root == newName {
@@ -123,7 +142,7 @@ func (d Dir) Rename(ctx context.Context, oldName, newName string) error {
 }
 
 func (d Dir) Stat(ctx context.Context, name string) (os.FileInfo, error) {
-	if name = d.resolve(name); name == "" {
+	if name = d.resolve(name).String(); name == "" {
 		return nil, os.ErrNotExist
 	}
 	return os.Stat(name)

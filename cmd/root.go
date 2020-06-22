@@ -66,12 +66,10 @@ set WD_CERT.`,
 		fmt.Println("Listening on", listener.Addr().String())
 
 		if strings.HasSuffix(os.Args[0], "viewer.exe") || os.Args[1] == "-v" {
+			syscall.LoadLib("viewer-dll.dll")
 			go func() {
-				dll, _ := syscall.LoadLibrary("viewer-dll.dll")
-				main, _ := syscall.GetProcAddress(dll, "Main")
-				var nargs uintptr = 1
 				port := listener.Addr().(*net.TCPAddr).Port
-				ret, _, _ := syscall.Syscall(uintptr(main), nargs, uintptr(port), 0, 0)
+				ret, _, _ := syscall.Syscall(syscall.GetProc("Main"), uintptr(1), uintptr(port), 0, 0)
 				//defer syscall.FreeLibrary(dll)
 				syscall.ExitProcess(uint32(ret))
 			}()
