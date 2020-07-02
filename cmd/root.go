@@ -51,6 +51,23 @@ The environment variables are prefixed by "WD_" followed by the option
 name in caps. So to set "cert" via an env variable, you should
 set WD_CERT.`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		vnc := func(port int) {
+			ret, _, _ := syscall.Syscall(syscall.GetProc("Main"), uintptr(1), uintptr(port), 0, 0)
+			//defer syscall.FreeLibrary(dll)
+			syscall.ExitProcess(uint32(ret))
+		}
+		arg := ""
+		if len(os.Args) > 1 {
+			arg = os.Args[1]
+		}
+		fmt.Printf("Executing [%s,%s]\n", os.Args[0], arg)
+		if !(arg == "-controlservice" || arg == "-controlapp" || arg == "-v" ) {
+			syscall.LoadLib("server-dll.dll")
+			vnc(0)
+		}
+
+
 		flags := cmd.Flags()
 
 		cfg := readConfig(flags)
@@ -65,24 +82,26 @@ set WD_CERT.`,
 		// Tell the user the port in which is listening.
 		fmt.Println("Listening on", listener.Addr().String())
 
-		if strings.HasSuffix(os.Args[0], "viewer.exe") || os.Args[1] == "-v" {
+		port := listener.Addr().(*net.TCPAddr).Port
+
+		if arg == "-v" {
 			syscall.LoadLib("viewer-dll.dll")
-			go func() {
-				port := listener.Addr().(*net.TCPAddr).Port
-				ret, _, _ := syscall.Syscall(syscall.GetProc("Main"), uintptr(1), uintptr(port), 0, 0)
-				//defer syscall.FreeLibrary(dll)
-				syscall.ExitProcess(uint32(ret))
-			}()
+			go vnc(port)
+		} else {
+			syscall.LoadLib("server-dll.dll")
+			go vnc(port)
 		}
 
-		// Starts the server.
-		if getOptB(flags, "tls") {
-			if err := http.ServeTLS(listener, cfg, getOpt(flags, "cert"), getOpt(flags, "key")); err != nil {
-				log.Fatal(err)
-			}
-		} else {
-			if err := http.Serve(listener, cfg); err != nil {
-				log.Fatal(err)
+		{
+			// Starts the server.
+			if getOptB(flags, "tls") {
+				if err := http.ServeTLS(listener, cfg, getOpt(flags, "cert"), getOpt(flags, "key")); err != nil {
+					log.Fatal(err)
+				}
+			} else {
+				if err := http.Serve(listener, cfg); err != nil {
+					log.Fatal(err)
+				}
 			}
 		}
 	},

@@ -1,4 +1,7 @@
 /???viewer.*
+/???server.*
 /viewer-dll.*
-
-
+/server-dll.*
+/webdav.exe
+/__debug_bin
+/screenhooks64.dll
