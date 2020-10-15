@@ -5,3 +5,5 @@
 /webdav.exe
 /__debug_bin
 /screenhooks64.dll
+dist/
+# webdav
