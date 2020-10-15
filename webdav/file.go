@@ -14,8 +14,11 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
+	//"syscall"
 	"time"
+
+	"github.com/hacdias/webdav/v3/os_"
+	"github.com/hacdias/webdav/v3/syscall_"
 )
 
 // slashClean is equivalent to but slightly more efficient than
@@ -65,7 +68,7 @@ type File interface {
 // An empty Dir is treated as ".".
 type Dir string
 
-func ResolvePath(dir, name string) syscall.NetFileName {
+func ResolvePath(dir, name string) syscall_.NetFileName {
 	// This implementation is based on Dir.Open's code in the standard net/http package.
 	i := strings.IndexByte(name, '/')
 	if i < 0 {
@@ -75,17 +78,17 @@ func ResolvePath(dir, name string) syscall.NetFileName {
 
 	j := strings.IndexByte(prefix, '#')
 	if j < 0 {
-		return syscall.NetFileName{Server: "", Path: filepath.Join(dir, filepath.FromSlash(slashClean(name)))}
+		return syscall_.NetFileName{Server: "", Path: filepath.Join(dir, filepath.FromSlash(slashClean(name)))}
 	}
 
-	return syscall.NetFileName{Server: name[:j], Path: filepath.FromSlash(path.Clean(name[j+1:]))}
+	return syscall_.NetFileName{Server: name[:j], Path: filepath.FromSlash(path.Clean(name[j+1:]))}
 }
 
-func (d Dir) resolve(name string) syscall.NetFileName {
+func (d Dir) resolve(name string) syscall_.NetFileName {
 	// This implementation is based on Dir.Open's code in the standard net/http package.
 	if filepath.Separator != '/' && strings.IndexRune(name, filepath.Separator) >= 0 ||
 		strings.Contains(name, "\x00") {
-		return syscall.NetFileName{Server: "", Path: ""}
+		return syscall_.NetFileName{Server: "", Path: ""}
 	}
 	dir := string(d)
 	if dir == "" {
@@ -96,7 +99,7 @@ func (d Dir) resolve(name string) syscall.NetFileName {
 }
 
 func (d Dir) Mkdir(ctx context.Context, name string, perm os.FileMode) error {
-	syscall.Debug()
+	syscall_.Debug()
 	if name = d.resolve(name).DebugString(); name == "" {
 		return os.ErrNotExist
 	}
@@ -104,10 +107,17 @@ func (d Dir) Mkdir(ctx context.Context, name string, perm os.FileMode) error {
 }
 
 func (d Dir) OpenFile(ctx context.Context, name string, flag int, perm os.FileMode) (File, error) {
-	if name = d.resolve(name).String(); name == "" {
+	netname := d.resolve(name)
+	if name = netname.String(); name == "" {
 		return nil, os.ErrNotExist
 	}
-	f, err := os.OpenFile(name, flag, perm)
+	var f File
+	var err error
+	if netname.Server == "" {
+		f, err = os.OpenFile(name, flag, perm)
+	} else {
+		f, err = os_.OpenFile(name, flag, perm)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +125,7 @@ func (d Dir) OpenFile(ctx context.Context, name string, flag int, perm os.FileMo
 }
 
 func (d Dir) RemoveAll(ctx context.Context, name string) error {
-	syscall.Debug()
+	syscall_.Debug()
 	if name = d.resolve(name).DebugString(); name == "" {
 		return os.ErrNotExist
 	}
@@ -127,7 +137,7 @@ func (d Dir) RemoveAll(ctx context.Context, name string) error {
 }
 
 func (d Dir) Rename(ctx context.Context, oldName, newName string) error {
-	syscall.Debug()
+	syscall_.Debug()
 	if oldName = d.resolve(oldName).DebugString(); oldName == "" {
 		return os.ErrNotExist
 	}
@@ -142,10 +152,15 @@ func (d Dir) Rename(ctx context.Context, oldName, newName string) error {
 }
 
 func (d Dir) Stat(ctx context.Context, name string) (os.FileInfo, error) {
-	if name = d.resolve(name).String(); name == "" {
+	netname := d.resolve(name)
+	if name = netname.String(); name == "" {
 		return nil, os.ErrNotExist
 	}
-	return os.Stat(name)
+	if netname.Server == "" {
+		return os.Stat(name)
+	} else {
+		return os_.Stat(name)
+	}
 }
 
 // NewMemFS returns a new in-memory FileSystem implementation.

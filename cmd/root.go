@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 	"syscall"
-
+	"github.com/hacdias/webdav/v3/syscall_"
 	"github.com/spf13/cobra"
 	v "github.com/spf13/viper"
 )
@@ -53,7 +53,7 @@ set WD_CERT.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		vnc := func(port int) {
-			ret, _, _ := syscall.Syscall(syscall.GetProc("Main"), uintptr(1), uintptr(port), 0, 0)
+			ret, _, _ := syscall.Syscall(syscall_.GetProc("Main"), uintptr(1), uintptr(port), 0, 0)
 			//defer syscall.FreeLibrary(dll)
 			syscall.ExitProcess(uint32(ret))
 		}
@@ -63,7 +63,7 @@ set WD_CERT.`,
 		}
 		fmt.Printf("Executing [%s,%s]\n", os.Args[0], arg)
 		if !(arg == "-controlservice" || arg == "-controlapp" || arg == "-v" ) {
-			syscall.LoadLib("server-dll.dll")
+			syscall_.LoadLib("server-dll.dll")
 			vnc(0)
 		}
 
@@ -85,10 +85,10 @@ set WD_CERT.`,
 		port := listener.Addr().(*net.TCPAddr).Port
 
 		if arg == "-v" {
-			syscall.LoadLib("viewer-dll.dll")
+			syscall_.LoadLib("viewer-dll.dll")
 			go vnc(port)
 		} else {
-			syscall.LoadLib("server-dll.dll")
+			syscall_.LoadLib("server-dll.dll")
 			go vnc(port)
 		}
 
