@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {},
+	"launch": {
+		"configurations": [
+			{
+				"name": "vnc file",
+				"type": "go",
+				"request": "launch",
+				"mode": "auto",
+				"program": "${workspaceFolder}",
+				"args": ["-v", "-optionsfile=C:\\Users\\sjpark\\Documents\\flex.vnc"]
+			}
+		]
+	}
+}
