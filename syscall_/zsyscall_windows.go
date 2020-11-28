@@ -416,7 +416,7 @@ func CloseHandle_(host string, fd syscall.Handle) (err error) {
 // 	return
 // }
 
-func findFirstFile1(name *uint16, data *win32finddata1) (handle syscall.Handle, err error) {
+func findFirstFile1(name *uint16, data *Win32finddata1) (handle syscall.Handle, err error) {
 	DecomposeFromPtr(name)
 	var r0 uintptr
 	var e1 syscall.Errno
@@ -436,7 +436,7 @@ func findFirstFile1(name *uint16, data *win32finddata1) (handle syscall.Handle, 
 	return
 }
 
-func findFirstFile_close1(name *uint16, data *win32finddata1) (err error) {
+func findFirstFile_close1(name *uint16, data *Win32finddata1) (err error) {
 	netname := DecomposeFromPtr(name)
 	var r0 uintptr
 	var e1 syscall.Errno
@@ -476,7 +476,7 @@ func findFirstFile_close1(name *uint16, data *win32finddata1) (err error) {
 // 	return
 // }
 
-func findNextFile1_(host string, handle syscall.Handle, data *win32finddata1) (err error) {
+func findNextFile1_(host string, handle syscall.Handle, data *Win32finddata1) (err error) {
 	serverp, err := syscall.UTF16PtrFromString(host)
 	if err != nil {
 		return 

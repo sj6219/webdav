@@ -1111,10 +1111,10 @@ func FindFirstFile(name *uint16, data *syscall.Win32finddata) (handle syscall.Ha
 	// For Go 1.1, we might avoid the allocation of win32finddata1 here
 	// by adding a final Bug [2]uint16 field to the struct and then
 	// adjusting the fields in the result directly.
-	var data1 win32finddata1
+	var data1 Win32finddata1
 	handle, err = findFirstFile1(name, &data1)
 	if err == nil {
-		copyFindData(data, &data1)
+		CopyFindData(data, &data1)
 	}
 	return
 }
@@ -1128,19 +1128,19 @@ func FindFirstFile_Close(name *uint16, data *syscall.Win32finddata) (err error) 
 	// For Go 1.1, we might avoid the allocation of win32finddata1 here
 	// by adding a final Bug [2]uint16 field to the struct and then
 	// adjusting the fields in the result directly.
-	var data1 win32finddata1
+	var data1 Win32finddata1
 	err = findFirstFile_close1(name, &data1)
 	if err == nil {
-		copyFindData(data, &data1)
+		CopyFindData(data, &data1)
 	}
 	return
 }
 
 func FindNextFile_(host string, handle syscall.Handle, data *syscall.Win32finddata) (err error) {
-	var data1 win32finddata1
+	var data1 Win32finddata1
 	err = findNextFile1_(host, handle, &data1)
 	if err == nil {
-		copyFindData(data, &data1)
+		CopyFindData(data, &data1)
 	}
 	return
 }

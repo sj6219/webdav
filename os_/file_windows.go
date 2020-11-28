@@ -118,6 +118,12 @@ type dirInfo struct {
 	isempty  bool // set if FindFirstFile returns ERROR_FILE_NOT_FOUND
 }
 
+type dirInfo_  struct {
+	data     syscall_.Win32finddata1
+	isempty int32
+	dirtype int32
+  }
+
 // func epipecheck(file *File, e error) {
 // }
 
@@ -199,6 +205,53 @@ func openFileNolog(name string, flag int, perm os.FileMode) (*File, error) {
 	if name == "" {
 		return nil, &os.PathError{"open", name, syscall.ENOENT}
 	}
+	netname := syscall_.Decompose(name)
+	path := fixLongPath(netname.String())
+	namep, err := syscall.UTF16PtrFromString(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var r1 uintptr
+	var e1 syscall.Errno
+	var d_ dirInfo_
+	r1, _, e1 = syscall.Syscall6(syscall_.GetProc("OpenFile_"), 4, uintptr(unsafe.Pointer(namep)), uintptr(flag),  uintptr(syscallMode(perm)), uintptr(unsafe.Pointer(&d_)), 0, 0)
+	if r1 == 0 {
+		if e1 != 0 {
+			err = syscall.Errno(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+		return nil, err
+	}
+	handle := syscall.Handle(r1)
+
+	var f *File
+	switch d_.dirtype {
+	default:
+		f = newFile(handle, name, "file")
+	case 1:
+		d := new(dirInfo)
+		syscall_.CopyFindData(&d.data, &d_.data)
+		d.isempty = d_.isempty != 0
+		d.path = path
+		if !isAbs(d.path) {
+			d.path, err = syscall.FullPath(d.path)
+			if err != nil {
+				return nil, err
+			}
+		}
+		f = newFile(handle, name, "dir")
+		f.dirinfo = d
+	case 2: 
+		f = newFile(handle, name, "console")
+	case 3: 
+		f = newFile(handle, name, "pipe")
+	}
+	return f, nil
+
+
+
 	r, errf := openFile(name, flag, perm)
 	if errf == nil {
 		return r, nil

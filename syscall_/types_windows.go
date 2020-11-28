@@ -391,7 +391,7 @@ type SecurityAttributes struct {
 
 // This is the actual system call structure.
 // Win32finddata is what we committed to in Go 1.
-type win32finddata1 struct {
+type Win32finddata1 struct {
 	FileAttributes    uint32
 	CreationTime      syscall.Filetime
 	LastAccessTime    syscall.Filetime
@@ -404,7 +404,7 @@ type win32finddata1 struct {
 	AlternateFileName [14]uint16
 }
 
-func copyFindData(dst *syscall.Win32finddata, src *win32finddata1) {
+func CopyFindData(dst *syscall.Win32finddata, src *Win32finddata1) {
 	dst.FileAttributes = src.FileAttributes
 	dst.CreationTime = src.CreationTime
 	dst.LastAccessTime = src.LastAccessTime

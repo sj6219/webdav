@@ -42,6 +42,26 @@ type fileStat struct {
 	appendNameToPath bool
 }
 
+type fileStat_ struct {
+	// from ByHandleFileInformation, Win32FileAttributeData and Win32finddata
+	FileAttributes uint32
+	CreationTime   syscall.Filetime
+	LastAccessTime syscall.Filetime
+	LastWriteTime  syscall.Filetime
+	FileSizeHigh   uint32
+	FileSizeLow    uint32
+
+	// from Win32finddata
+	Reserved0 uint32
+
+	// used to implement SameFile
+	//sync.Mutex
+	path             uint32
+	vol              uint32
+	idxhi            uint32
+	idxlo            uint32
+  }
+
 // newFileStatFromGetFileInformationByHandle calls GetFileInformationByHandle
 // to gather all required information about the file handle h.
 func newFileStatFromGetFileInformationByHandle(path string, h syscall.Handle) (fs *fileStat, err error) {

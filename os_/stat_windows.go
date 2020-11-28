@@ -62,6 +62,38 @@ func stat(funcname, name string, createFileAttrs uint32) (os.FileInfo, error) {
 		return nil, &os.PathError{funcname, name, err}
 	}
 
+	var fs_ fileStat_
+	var r1 uintptr
+	var e1 syscall.Errno
+	r1, _, e1 = syscall.Syscall(syscall_.GetProc("Stat_"), 2, uintptr(unsafe.Pointer(namep)), uintptr(unsafe.Pointer(&fs_)), 0)
+	if r1 == 0 {
+		if e1 != 0 {
+			err = syscall.Errno(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+		return nil, &os.PathError{funcname, name, err}
+	}
+	fs := &fileStat {
+		FileAttributes: fs_.FileAttributes,
+		CreationTime:   fs_.CreationTime,
+		LastAccessTime: fs_.LastAccessTime,
+		LastWriteTime:  fs_.LastWriteTime,
+		FileSizeHigh:   fs_.FileSizeHigh,
+		FileSizeLow:    fs_.FileSizeLow,
+		vol: fs_.vol,
+		idxhi: fs_.idxhi,
+		idxlo:  fs_.idxlo,
+		Reserved0: fs_.Reserved0,
+	}
+	if fs_.path != 0 {
+		if err := fs.saveInfoFromPath(netname.String()); err != nil {
+			return nil, err
+		}
+	}
+
+	return fs, nil
+
 	// Try GetFileAttributesEx first, because it is faster than CreateFile.
 	// See https://golang.org/issues/19922#issuecomment-300031421 for details.
 	var fa syscall.Win32FileAttributeData
