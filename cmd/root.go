@@ -19,7 +19,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	flags := rootCmd.Flags()
-	flags.StringVarP(&cfgFile, "config", "c", "", "config file path")
+	flags.StringVarP(&cfgFile, "config", "c", "config.yaml", "config file path")
 	flags.BoolP("tls", "t", false, "enable tls")
 	flags.Bool("auth", true, "enable auth")
 	flags.String("cert", "cert.pem", "TLS certificate")

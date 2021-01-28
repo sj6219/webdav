@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	//"fmt"
 )
 
 // CorsCfg is the CORS config.
@@ -27,6 +28,17 @@ type Config struct {
 
 // ServeHTTP determines if the request is for this plugin, and if all prerequisites are met.
 func (c *Config) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// fmt.Printf ("<%v %v %v\n", r.Method, r.URL.Path, r.Proto);
+    // for key, element := range r.Header {
+	// 	for _, v := range element {
+	// 		fmt.Printf ("<%v: %s\n", key, v);
+	// 	}
+	// }
+	// fmt.Printf ("<Host: %v\n", r.Host);
+	// fmt.Printf ("<\n");
+
+	// net\net.go Read(b []byte) Write(b []byte)
+	// 	
 	u := c.User
 	requestOrigin := r.Header.Get("Origin")
 
